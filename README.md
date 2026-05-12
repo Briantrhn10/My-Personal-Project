@@ -26,5 +26,5 @@ Repositori ini tidak hanya sebagai tempat penyimpanan kode, tetapi juga sebagai 
 
 ## 📫 Mari Terhubung
 Saya selalu terbuka untuk diskusi, kolaborasi, atau peluang profesional di dunia IT. Jangan ragu untuk menghubungi saya!
-* **LinkedIn:** [Masukkan Link LinkedIn Kamu]
-* **Email:** [Masukkan Alamat Email Kamu]
+* **LinkedIn:** [https://www.linkedin.com/in/brian-tarihoran-a947b536b/]
+* **Email:** [briyantarihoran@gmail.com]
