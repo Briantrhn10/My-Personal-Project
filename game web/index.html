@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Memory Match Game - Level Up</title>
+    <style>
+        * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body {
+            margin: 0; padding: 0;
+            background-color: #282c34; color: white;
+            display: flex; justify-content: center; align-items: center;
+            min-height: 100vh;
+        }
+        
+        .screen { display: none; flex-direction: column; align-items: center; text-align: center; width: 100%; max-width: 600px; padding: 20px; }
+        .screen.active { display: flex; }
+        h1, h2 { color: #61dafb; }
+
+        button {
+            background-color: #61dafb; color: #282c34; border: none;
+            padding: 12px 24px; margin: 10px; font-size: 18px; font-weight: bold;
+            border-radius: 8px; cursor: pointer; transition: 0.3s; width: 220px;
+        }
+        button:hover:not(:disabled) { background-color: #4fa8c7; transform: scale(1.05); }
+        button:disabled { background-color: #555; color: #888; cursor: not-allowed; transform: none; }
+        .btn-secondary { background-color: #444c56; color: white; }
+        .btn-secondary:hover:not(:disabled) { background-color: #5c6673; }
+
+        .game-info { font-size: 20px; margin-bottom: 10px; font-weight: bold; }
+
+        /* Papan Game Fleksibel berdasarkan baris & kolom */
+        .game-board {
+            display: grid;
+            gap: 10px;
+            perspective: 1000px;
+            margin-bottom: 20px;
+            /* Ukuran menyesuaikan otomatis di JS menggunakan CSS Variables */
+        }
+        
+        .card {
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.5s;
+            cursor: pointer;
+            width: 60px; /* Ukuran default */
+            height: 60px;
+        }
+        .card.flip { transform: rotateY(180deg); }
+        
+        .front-face, .back-face {
+            width: 100%; height: 100%; position: absolute;
+            border-radius: 8px; display: flex; justify-content: center; align-items: center;
+            font-size: 30px; backface-visibility: hidden; box-shadow: 2px 2px 5px rgba(0,0,0,0.3);
+        }
+        .front-face { transform: rotateY(180deg); background: #61dafb; }
+        .back-face { background: #444c56; }
+        
+        .info-box { background: #1c1f24; padding: 20px; border-radius: 10px; margin-bottom: 20px; line-height: 1.6; width: 100%; }
+        .level-stats { display: flex; justify-content: space-between; border-bottom: 1px solid #444; padding: 5px 0; }
+    </style>
+</head>
+<body>
+
+    <div id="lobby-screen" class="screen active">
+        <h1>🧠 Memory Match</h1>
+        <p>Selesaikan level untuk membuka level berikutnya!</p>
+        <button onclick="showScreen('level-screen')">▶ Pilih Level</button>
+        <button onclick="showScoreScreen()">🏆 High Score</button>
+        <button onclick="showScreen('about-screen')">ℹ️ About</button>
+    </div>
+
+    <div id="level-screen" class="screen">
+        <h2>Pilih Level</h2>
+        <div id="level-buttons-container">
+            </div>
+        <button class="btn-secondary" onclick="showScreen('lobby-screen')">Kembali</button>
+    </div>
+
+    <div id="game-screen" class="screen">
+        <h2 id="game-level-title">Level ?</h2>
+        <div class="game-info">Waktu: <span id="time-display">0</span> detik</div>
+        <div class="game-board" id="gameBoard"></div>
+        <button class="btn-secondary" onclick="backToLobby()">Berhenti & Kembali</button>
+    </div>
+
+    <div id="highscore-screen" class="screen">
+        <h1>🏆 Waktu Tercepat</h1>
+        <div class="info-box" id="highscore-list">
+            </div>
+        <button class="btn-secondary" onclick="showScreen('lobby-screen')">Kembali</button>
+    </div>
+
+    <div id="about-screen" class="screen">
+        <h1>ℹ️ About Game</h1>
+        <div class="info-box">
+            <p><strong>Tujuan Pembuatan:</strong><br>
+            Mini-project untuk memantapkan pemahaman logika *front-end* HTML, CSS (CSS Grid), JavaScript murni, dan manajemen *LocalStorage* tingkat lanjut.</p>
+            <p><strong>Developer:</strong><br>Brian Tarihoran</p>
+        </div>
+        <button class="btn-secondary" onclick="showScreen('lobby-screen')">Kembali</button>
+    </div>
+
+    <script>
+        // Database Emoji Super Banyak (minimal butuh 21 pasang untuk LVL 5)
+        const allEmojis = ['🚀','👽','👻','🤖','👾','🎃','🦖','🐉','🤡','💩','🦁','🐯','🦄','🐼','🐸','🦊','🐙','🦀','🍩','🍕','🍔'];
+        
+        // Konfigurasi Level (Kolom x Baris, Preview Time dalam milidetik)
+        const levels = [
+            { level: 1, cols: 4, rows: 4, previewTime: 3000 }, // 16 kartu, 3 detik
+            { level: 2, cols: 4, rows: 5, previewTime: 4000 }, // 20 kartu, 4 detik
+            { level: 3, cols: 5, rows: 6, previewTime: 6000 }, // 30 kartu, 6 detik
+            { level: 4, cols: 6, rows: 6, previewTime: 8000 }, // 36 kartu, 8 detik
+            { level: 5, cols: 6, rows: 7, previewTime: 10000 } // 42 kartu, 10 detik
+        ];
+
+        // State Global
+        let currentLevel = 1;
+        let unlockedLevel = 1; // Default
+        let highScores = { 1: null, 2: null, 3: null, 4: null, 5: null };
+        
+        // State Game
+        let cardItems = [];
+        const gameBoard = document.getElementById('gameBoard');
+        let hasFlippedCard = false;
+        let lockBoard = false;
+        let firstCard, secondCard;
+        let matchedPairs = 0;
+        let timerInterval;
+        let seconds = 0;
+
+        // --- INISIALISASI SAAT LOAD ---
+        window.onload = () => {
+            loadProgress();
+            renderLevelButtons();
+        };
+
+        function loadProgress() {
+            let savedUnlocked = localStorage.getItem('mmg_unlockedLevel');
+            if(savedUnlocked) unlockedLevel = parseInt(savedUnlocked);
+
+            let savedScores = localStorage.getItem('mmg_highScores');
+            if(savedScores) highScores = JSON.parse(savedScores);
+        }
+
+        function saveProgress() {
+            localStorage.setItem('mmg_unlockedLevel', unlockedLevel);
+            localStorage.setItem('mmg_highScores', JSON.stringify(highScores));
+        }
+
+        // --- NAVIGASI ---
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(screenId).classList.add('active');
+            if(screenId === 'level-screen') renderLevelButtons(); // Update status tombol (disabled/tidak)
+        }
+
+        function backToLobby() {
+            clearInterval(timerInterval);
+            showScreen('lobby-screen');
+        }
+
+        // --- TAMPILAN MENU ---
+        function renderLevelButtons() {
+            const container = document.getElementById('level-buttons-container');
+            container.innerHTML = '';
+            
+            levels.forEach(lvl => {
+                const btn = document.createElement('button');
+                btn.innerText = `Level ${lvl.level} (${lvl.cols}x${lvl.rows})`;
+                
+                if(lvl.level > unlockedLevel) {
+                    btn.disabled = true;
+                    btn.innerText += ' 🔒';
+                } else {
+                    btn.onclick = () => startGame(lvl.level);
+                }
+                container.appendChild(btn);
+            });
+        }
+
+        function showScoreScreen() {
+            const list = document.getElementById('highscore-list');
+            list.innerHTML = '';
+            levels.forEach(lvl => {
+                const score = highScores[lvl.level];
+                const timeText = score ? `${score} Detik` : 'Belum selesai';
+                list.innerHTML += `
+                    <div class="level-stats">
+                        <span>Level ${lvl.level}:</span>
+                        <strong>${timeText}</strong>
+                    </div>`;
+            });
+            showScreen('highscore-screen');
+        }
+
+        // --- LOGIKA GAME ---
+        function startGame(levelNumber) {
+            currentLevel = levelNumber;
+            const config = levels[levelNumber - 1]; // Mengambil data level saat ini
+            
+            document.getElementById('game-level-title').innerText = `Level ${currentLevel}`;
+            showScreen('game-screen');
+            gameBoard.innerHTML = '';
+            matchedPairs = 0;
+            seconds = 0;
+            
+            // Ubah teks agar memberitahu pemain berapa lama mereka punya waktu
+            document.getElementById('time-display').innerText = `Mengingat (${config.previewTime / 1000}s)...`;
+            
+            clearInterval(timerInterval);
+            lockBoard = true;
+
+            // Setup CSS Grid
+            gameBoard.style.gridTemplateColumns = `repeat(${config.cols}, 1fr)`;
+            gameBoard.style.gridTemplateRows = `repeat(${config.rows}, 1fr)`;
+
+            let totalCards = config.cols * config.rows;
+            let pairsNeeded = totalCards / 2;
+            
+            let selectedEmojis = allEmojis.slice(0, pairsNeeded);
+            cardItems = [...selectedEmojis, ...selectedEmojis];
+            cardItems = cardItems.sort(() => Math.random() - 0.5);
+
+            // Kita lempar 'previewTime' ke fungsi berikutnya
+            createBoardAndPeek(config.previewTime);
+        }
+
+        function createBoardAndPeek(delay) {
+            let allCards = [];
+            cardItems.forEach(item => {
+                const cardEl = document.createElement('div');
+                cardEl.classList.add('card');
+                cardEl.classList.add('flip'); // Terbuka di awal
+                cardEl.dataset.name = item;
+                cardEl.innerHTML = `
+                    <div class="front-face">${item}</div>
+                    <div class="back-face">❓</div>
+                `;
+                cardEl.addEventListener('click', flipCard);
+                gameBoard.appendChild(cardEl);
+                allCards.push(cardEl);
+            });
+
+            // Gunakan parameter 'delay' sebagai pengganti 3000ms statis
+            setTimeout(() => {
+                allCards.forEach(card => card.classList.remove('flip'));
+                startTimerAndUnlock();
+            }, delay);
+        }
+
+        function startTimerAndUnlock() {
+            lockBoard = false;
+            document.getElementById('time-display').innerText = seconds;
+            timerInterval = setInterval(() => {
+                seconds++;
+                document.getElementById('time-display').innerText = seconds;
+            }, 1000);
+        }
+
+        function flipCard() {
+            if (lockBoard || this === firstCard) return;
+            this.classList.add('flip');
+
+            if (!hasFlippedCard) {
+                hasFlippedCard = true;
+                firstCard = this;
+                return;
+            }
+
+            secondCard = this;
+            checkForMatch();
+        }
+
+        function checkForMatch() {
+            let isMatch = firstCard.dataset.name === secondCard.dataset.name;
+            isMatch ? disableCards() : unflipCards();
+        }
+
+        function disableCards() {
+            firstCard.removeEventListener('click', flipCard);
+            secondCard.removeEventListener('click', flipCard);
+            matchedPairs++;
+            
+            if (matchedPairs === cardItems.length / 2) winLevel();
+            resetBoard();
+        }
+
+        function unflipCards() {
+            lockBoard = true;
+            setTimeout(() => {
+                firstCard.classList.remove('flip');
+                secondCard.classList.remove('flip');
+                resetBoard();
+            }, 1000);
+        }
+
+        function resetBoard() {
+            [hasFlippedCard, lockBoard] = [false, false];
+            [firstCard, secondCard] = [null, null];
+        }
+
+        // --- PENYELESAIAN LEVEL ---
+        function winLevel() {
+            clearInterval(timerInterval);
+            
+            setTimeout(() => {
+                // Cek dan Simpan Highscore
+                let currentBest = highScores[currentLevel];
+                if (!currentBest || seconds < currentBest) {
+                    highScores[currentLevel] = seconds;
+                    alert(`LEVEL ${currentLevel} SELESAI!\nWaktu: ${seconds} detik\n🔥 REKOR BARU! 🔥`);
+                } else {
+                    alert(`LEVEL ${currentLevel} SELESAI!\nWaktu: ${seconds} detik`);
+                }
+
+                // Buka Level Berikutnya (Maksimal Level 5)
+                if(currentLevel === unlockedLevel && currentLevel < 5) {
+                    unlockedLevel++;
+                    alert(`Level ${unlockedLevel} Terbuka!`);
+                }
+
+                saveProgress();
+                backToLobby();
+            }, 500);
+        }
+    </script>
+</body>
+</html>
