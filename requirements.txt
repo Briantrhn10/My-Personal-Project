@@ -1,0 +1,9 @@
+Flask
+Werkzeug
+opencv-python
+tensorflow
+ultralytics
+numpy
+scikit-learn
+fastdtw
+scipy

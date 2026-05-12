@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Tentang Aplikasi</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"/>
+  <style>
+    html, body {
+      min-height: 100%;
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, #e0f7fa, #ffffff);
+      display: flex;
+      flex-direction: column;
+    }
+    main {
+      flex: 1;
+      max-width: 800px;
+      margin: auto;
+      padding: 50px 20px;
+    }
+  </style>
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg navbar-dark" style="background-color: #0B2B4C;">
+  <div class="container-fluid">
+    <a class="navbar-brand d-flex align-items-center" href="/">
+      <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo" width="30" height="30" class="me-2" />
+      Volley Vision
+    </a>
+    <div class="ms-auto">
+      <a class="nav-link text-white" href="/about">About</a>
+    </div>
+  </div>
+</nav>
+
+<main>
+  <h2 class="text-center">Tentang Aplikasi</h2>
+  <p class="mt-4">
+    <strong>Volley Vision</strong> adalah aplikasi berbasis web yang dirancang untuk mengidentifikasi teknik pukulan dalam permainan bola voli. 
+    Sistem ini memanfaatkan kombinasi model <strong>YOLOv8 Pose Estimation</strong> dan <strong>LSTM</strong> untuk analisis teknik secara akurat.
+  </p>
+  <p>
+    Teknik yang dikenali antara lain:
+  </p>
+  <ul>
+    <li>Passing atas</li>
+    <li>Passing bawah</li>
+    <li>Service atas</li>
+    <li>Service bawah</li>
+    <li>Smash</li>
+  </ul>
+
+  <!-- Tambahan dua paragraf -->
+  <p>
+    Tujuan utama dari aplikasi ini adalah untuk mendukung proses analisis teknik dasar dalam pelatihan olahraga bola voli, khususnya dalam konteks edukasi maupun pembinaan atlet. Dengan sistem ini, pelatih atau pengguna dapat memperoleh informasi objektif dan otomatis mengenai jenis pukulan yang dilakukan oleh pemain berdasarkan urutan gerakan tubuhnya.
+  </p>
+  <p>
+    Aplikasi ini dikembangkan menggunakan bahasa pemrograman Python dan memanfaatkan berbagai pustaka seperti OpenCV, Ultralytics YOLOv8, dan TensorFlow/Keras untuk keperluan ekstraksi data pose, preprocessing, pelatihan model, serta antarmuka pengguna berbasis Flask. Sistem ini juga dilengkapi dengan fitur visualisasi hasil klasifikasi dan urutan gerakan, sehingga pengguna dapat memverifikasi output yang dihasilkan secara langsung.
+  </p>
+  <h5 class="mt-4">Alur Penggunaan Aplikasi</h5>
+<p>
+  Untuk memaksimalkan fungsionalitas aplikasi Volley Vision, berikut adalah langkah-langkah penggunaan yang disarankan:
+</p>
+<ol>
+  <li>
+    <strong>Rekam Video Latihan</strong><br/>
+    Lakukan perekaman sesi latihan teknik pukulan bola voli menggunakan kamera dengan posisi yang jelas dan stabil. Pastikan seluruh tubuh pemain terlihat agar sistem dapat mendeteksi pose dengan akurat.
+  </li>
+  <li>
+    <strong>Potong Video Menjadi Satu Gerakan</strong><br/>
+    Potong video menjadi satu fragmen pendek yang hanya memuat satu kali percobaan gerakan pukulan (misalnya satu kali smash atau servis). Hal ini dilakukan untuk memudahkan sistem dalam membaca urutan gerakan tanpa gangguan dari gerakan lain.
+  </li>
+  <li>
+    <strong>Unggah Video ke Aplikasi</strong><br/>
+    Gunakan fitur unggah pada halaman utama aplikasi untuk memasukkan video ke sistem. Format video yang disarankan adalah <code>.mp4</code> dengan durasi maksimal beberapa detik per fragmen.
+  </li>
+  <li>
+    <strong>Proses Deteksi dan Klasifikasi</strong><br/>
+    Setelah video diunggah, sistem akan secara otomatis mengekstraksi pose tubuh menggunakan model YOLOv8 Pose. Hasil keypoints tersebut kemudian diproses oleh model LSTM untuk mengklasifikasikan jenis teknik pukulan yang dilakukan.
+  </li>
+  <li>
+    <strong>Lihat Hasil dan Evaluasi</strong><br/>
+    Hasil klasifikasi ditampilkan dalam bentuk teks, grafik keypoint per frame, dan label teknik pukulan yang dikenali. Pengguna dapat mengevaluasi apakah gerakan telah sesuai dengan teknik yang diharapkan.
+  </li>
+</ol>
+<p class="mt-3">
+  <em>Catatan:</em> Aplikasi ini dirancang untuk membantu proses pembelajaran dan evaluasi teknik bola voli secara otomatis. Namun, sistem dapat saja melakukan kesalahan dalam klasifikasi akibat kualitas video, sudut kamera, atau ketidaksesuaian gerakan. Oleh karena itu, hasil klasifikasi sebaiknya tetap divalidasi oleh pelatih atau tenaga ahli sebagai bahan pertimbangan tambahan.
+</p>
+
+<p>
+      Bagi kamu yang baru mempelajari teknik dasar atau ingin memahami lebih dalam, kami menyediakan panduan lengkap.
+    </p>
+
+  <div class="text-center mt-4">
+    <a href="https://1drv.ms/w/c/4fa2f951314a2417/EYuv1U-2ZTRFqUsRXpnmq6kB0Q2JXrgDEnqQaeMH_lITDA?e=NC5OsZ" 
+       target="_blank" 
+       class="btn btn-info">
+      📘 Buka Panduan Lengkap Teknik Pukulan Voli
+    </a>
+  </div>
+
+  <div class="text-center mt-3">
+    <a href="/" class="btn btn-secondary">Kembali ke Beranda</a>
+  </div>
+</main>
+
+
+<footer class="bg-dark text-white text-center py-3">
+  © 2025 Volley Vision. All rights reserved.
+</footer>
+
+<!-- Logo watermark pojok kanan bawah -->
+<img src="{{ url_for('static', filename='logo.png') }}"
+     alt="Logo Watermark"
+     style="position: fixed; bottom: 20px; right: 20px; width: 120px; opacity: 0.1; pointer-events: none; z-index: 0;" />
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
